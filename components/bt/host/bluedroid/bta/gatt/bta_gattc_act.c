@@ -670,34 +670,34 @@ void bta_gattc_conn(tBTA_GATTC_CLCB *p_clcb, tBTA_GATTC_DATA *p_data)
     }
 
     /* start database cache if needed */
-    if (p_clcb->p_srcb->p_srvc_cache == NULL ||
-            p_clcb->p_srcb->state != BTA_GATTC_SERV_IDLE) {
-        if (p_clcb->p_srcb->state == BTA_GATTC_SERV_IDLE) {
-#if (GATTC_CACHE_NVS == TRUE)
-            p_clcb->p_srcb->state = BTA_GATTC_SERV_LOAD;
-            if (bta_gattc_cache_load(p_clcb)) {
-                p_clcb->p_srcb->state = BTA_GATTC_SERV_IDLE;
-                bta_gattc_reset_discover_st(p_clcb->p_srcb, BTA_GATT_OK);
-                //register service change
-                bta_gattc_register_service_change_notify(p_clcb->bta_conn_id, p_clcb->bda);
-            } else
-#endif
-            { /* cache is building */
-                p_clcb->p_srcb->state = BTA_GATTC_SERV_DISC;
-                /* cache load failure, start discovery */
-                bta_gattc_start_discover(p_clcb, NULL);
-            }
-        } else { /* cache is building */
-            p_clcb->state = BTA_GATTC_DISCOVER_ST;
-        }
-    } else {
-        /* a pending service handle change indication */
-        if (p_clcb->p_srcb->srvc_hdl_chg) {
-            p_clcb->p_srcb->srvc_hdl_chg = FALSE;
-            /* start discovery */
-            bta_gattc_sm_execute(p_clcb, BTA_GATTC_INT_DISCOVER_EVT, NULL);
-        }
-    }
+//    if (p_clcb->p_srcb->p_srvc_cache == NULL ||
+//            p_clcb->p_srcb->state != BTA_GATTC_SERV_IDLE) {
+//        if (p_clcb->p_srcb->state == BTA_GATTC_SERV_IDLE) {
+//#if (GATTC_CACHE_NVS == TRUE)
+//            p_clcb->p_srcb->state = BTA_GATTC_SERV_LOAD;
+//            if (bta_gattc_cache_load(p_clcb)) {
+//                p_clcb->p_srcb->state = BTA_GATTC_SERV_IDLE;
+//                bta_gattc_reset_discover_st(p_clcb->p_srcb, BTA_GATT_OK);
+//                //register service change
+//                bta_gattc_register_service_change_notify(p_clcb->bta_conn_id, p_clcb->bda);
+//            } else
+//#endif
+//            { /* cache is building */
+//                p_clcb->p_srcb->state = BTA_GATTC_SERV_DISC;
+//                /* cache load failure, start discovery */
+//                bta_gattc_start_discover(p_clcb, NULL);
+//            }
+//        } else { /* cache is building */
+//            p_clcb->state = BTA_GATTC_DISCOVER_ST;
+//        }
+//    } else {
+//        /* a pending service handle change indication */
+//        if (p_clcb->p_srcb->srvc_hdl_chg) {
+//            p_clcb->p_srcb->srvc_hdl_chg = FALSE;
+//            /* start discovery */
+//            bta_gattc_sm_execute(p_clcb, BTA_GATTC_INT_DISCOVER_EVT, NULL);
+//        }
+//    }
 
     if (p_clcb->p_rcb) {
         /* there is no RM for GATT */
