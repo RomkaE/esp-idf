@@ -253,7 +253,7 @@ BaseType_t xReturn = pdFAIL;
 													( ( UBaseType_t ) configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT,
 													pxTimerTaskStackBuffer,
 													pxTimerTaskTCBBuffer,
-													0 );
+													1 );
 
 			if( xTimerTaskHandle != NULL )
 			{
@@ -267,7 +267,7 @@ BaseType_t xReturn = pdFAIL;
 									configTIMER_TASK_STACK_DEPTH,
 									NULL,
 									( ( UBaseType_t ) configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT,
-									&xTimerTaskHandle, 0 );
+									&xTimerTaskHandle, 1 );
 		}
 		#endif /* configSUPPORT_STATIC_ALLOCATION */
 	}
