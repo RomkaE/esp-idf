@@ -41,6 +41,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "esp_err.h"
 
 #ifdef __cplusplus
@@ -168,6 +169,8 @@ esp_err_t esp_timer_start_periodic(esp_timer_handle_t timer, uint64_t period);
  *      - ESP_ERR_INVALID_STATE if the timer is not running
  */
 esp_err_t esp_timer_stop(esp_timer_handle_t timer);
+
+bool esp_timer_get_status(esp_timer_handle_t timer);
 
 /**
  * @brief Delete an esp_timer instance
