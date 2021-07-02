@@ -63,6 +63,11 @@ static void scan_done_handler(void* arg, esp_event_base_t event_base,
     wifi_ap_record_t *ap_list_buffer;
 
     esp_wifi_scan_get_ap_num(&sta_number);
+    if (!sta_number) {
+        ESP_LOGE(TAG, "No AP found");
+        return;
+    }
+
     ap_list_buffer = malloc(sta_number * sizeof(wifi_ap_record_t));
     if (ap_list_buffer == NULL) {
         ESP_LOGE(TAG, "Failed to malloc buffer to print scan results");
@@ -143,6 +148,7 @@ static bool wifi_cmd_sta_join(const char* ssid, const char* pass)
     int bits = xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, 0, 1, 0);
 
     wifi_config_t wifi_config = { 0 };
+    wifi_config.sta.pmf_cfg.capable = true;
 
     strlcpy((char*) wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
     if (pass) {
@@ -158,7 +164,7 @@ static bool wifi_cmd_sta_join(const char* ssid, const char* pass)
 
     reconnect = true;
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
-    ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
+    ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     esp_wifi_connect();
 
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, 0, 1, 5000/portTICK_RATE_MS);
@@ -238,7 +244,7 @@ static bool wifi_cmd_ap_set(const char* ssid, const char* pass)
     }
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     return true;
 }
 

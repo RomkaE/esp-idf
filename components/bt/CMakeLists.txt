@@ -96,6 +96,7 @@ if(CONFIG_BT_ENABLED)
                    "host/bluedroid/bta/dm/bta_dm_main.c"
                    "host/bluedroid/bta/dm/bta_dm_pm.c"
                    "host/bluedroid/bta/dm/bta_dm_sco.c"
+                   "host/bluedroid/bta/dm/bta_dm_qos.c"
                    "host/bluedroid/bta/gatt/bta_gatt_common.c"
                    "host/bluedroid/bta/gatt/bta_gattc_act.c"
                    "host/bluedroid/bta/gatt/bta_gattc_api.c"
@@ -572,6 +573,6 @@ idf_component_register(SRCS "${srcs}"
 if(CONFIG_BT_ENABLED)
     target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-implicit-fallthrough -Wno-unused-const-variable)
 
-    target_link_libraries(${COMPONENT_LIB} INTERFACE "-L${CMAKE_CURRENT_LIST_DIR}/controller/lib")
+    target_link_libraries(${COMPONENT_LIB} INTERFACE "-L${CMAKE_CURRENT_LIST_DIR}/controller/lib/esp32")
     target_link_libraries(${COMPONENT_LIB} PUBLIC btdm_app)
 endif()

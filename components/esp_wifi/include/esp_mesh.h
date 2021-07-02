@@ -212,6 +212,7 @@ typedef enum {
                                              router with the same SSID, this event will be posted and the new router information is attached. */
     MESH_EVENT_PS_PARENT_DUTY,          /**< parent duty */
     MESH_EVENT_PS_CHILD_DUTY,           /**< child duty */
+    MESH_EVENT_PS_DEVICE_DUTY,          /**< device duty */
     MESH_EVENT_MAX,
 } mesh_event_id_t;
 
@@ -237,8 +238,8 @@ typedef enum {
     MESH_PROTO_HTTP,    /**< HTTP protocol */
     MESH_PROTO_JSON,    /**< JSON format */
     MESH_PROTO_MQTT,    /**< MQTT protocol */
-    MESH_PROTO_AP,      /**< IP network mesh communication of node's AP inteface */
-    MESH_PROTO_STA,     /**< IP network mesh communication of node's STA inteface */
+    MESH_PROTO_AP,      /**< IP network mesh communication of node's AP interface */
+    MESH_PROTO_STA,     /**< IP network mesh communication of node's STA interface */
 } mesh_proto_t;
 
 /**
@@ -654,7 +655,7 @@ esp_err_t esp_mesh_stop(void);
  *               - If the packet is to the root ("to" parameter isn't NULL) or to external IP network, MESH_DATA_TODS should be set.
  *               - If the packet is from the root to an internal device, MESH_DATA_FROMDS should be set.
  *             - Specify whether this API is block or non-block, block by default
- *               - If needs non-block, MESH_DATA_NONBLOCK should be set.
+ *               - If needs non-blocking, MESH_DATA_NONBLOCK should be set. Otherwise, may use esp_mesh_send_block_time() to specify a blocking time.
  *             - In the situation of the root change, MESH_DATA_DROP identifies this packet can be dropped by the new root
  *               for upstream data to external IP network, we try our best to avoid data loss caused by the root change, but
  *               there is a risk that the new root is running out of memory because most of memory is occupied by the pending data which
@@ -687,6 +688,17 @@ esp_err_t esp_mesh_stop(void);
  */
 esp_err_t esp_mesh_send(const mesh_addr_t *to, const mesh_data_t *data,
                         int flag, const mesh_opt_t opt[],  int opt_count);
+/**
+ * @brief      Set blocking time of esp_mesh_send()
+ *
+ * @attention  This API shall be called before mesh is started.
+ *
+ * @param[in]  time_ms  blocking time of esp_mesh_send(), unit:ms
+ *
+ * @return
+ *    - ESP_OK
+ */
+esp_err_t esp_mesh_send_block_time(uint32_t time_ms);
 
 /**
  * @brief      Receive a packet targeted to self over the mesh network
@@ -1565,7 +1577,7 @@ bool esp_mesh_is_device_active(void);
 
 /**
  * @brief      Set the device duty cycle and type
- *             - The range of dev_duty values is 1 to 100. The default value is 12.
+ *             - The range of dev_duty values is 1 to 100. The default value is 10.
  *             - dev_duty = 100, the PS will be stopped.
  *             - dev_duty is better to not less than 5.
  *             - dev_duty_type could be MESH_PS_DEVICE_DUTY_REQUEST or MESH_PS_DEVICE_DUTY_DEMAND.
@@ -1596,7 +1608,7 @@ esp_err_t esp_mesh_get_active_duty_cycle(int* dev_duty, int* dev_duty_type);
 
 /**
  * @brief      Set the network duty cycle, duration and rule
- *             - The range of nwk_duty values is 1 to 100. The default value is 12.
+ *             - The range of nwk_duty values is 1 to 100. The default value is 10.
  *             - nwk_duty is the network duty cycle the entire network or the up-link path will use. A device that successfully
  *             sets the nwk_duty is known as a NWK-DUTY-MASTER.
  *             - duration_mins specifies how long the specified nwk_duty will be used. Once duration_mins expires, the root will take
@@ -1604,7 +1616,6 @@ esp_err_t esp_mesh_get_active_duty_cycle(int* dev_duty, int* dev_duty_type);
  *             NWK-DUTY-MASTER again.
  *             - duration_mins = (-1) represents nwk_duty will be used until a new NWK-DUTY-MASTER with a different nwk_duty appears.
  *             - Only the root can set duration_mins to (-1).
- *             - applied_rule could be MESH_PS_NETWORK_DUTY_APPLIED_ENTIRE or MESH_PS_NETWORK_DUTY_APPLIED_UPLINK.
  *             - If applied_rule is set to MESH_PS_NETWORK_DUTY_APPLIED_ENTIRE, the nwk_duty will be used by the entire network.
  *             - If applied_rule is set to MESH_PS_NETWORK_DUTY_APPLIED_UPLINK, the nwk_duty will only be used by the up-link path nodes.
  *             - The root does not accept MESH_PS_NETWORK_DUTY_APPLIED_UPLINK.
@@ -1620,7 +1631,7 @@ esp_err_t esp_mesh_get_active_duty_cycle(int* dev_duty, int* dev_duty_type);
  *
  * @param[in]  nwk_duty  network duty cycle
  * @param[in]  duration_mins  duration (unit: minutes)
- * @param[in]  applied_rule  MESH_PS_NETWORK_DUTY_APPLIED_ENTIRE or MESH_PS_NETWORK_DUTY_APPLIED_UPLINK
+ * @param[in]  applied_rule  only support MESH_PS_NETWORK_DUTY_APPLIED_ENTIRE
  *
  * @return
  *    - ESP_OK
@@ -1634,7 +1645,7 @@ esp_err_t esp_mesh_set_network_duty_cycle(int nwk_duty, int duration_mins, int a
  * @param[out] nwk_duty  current network duty cycle
  * @param[out] duration_mins  the duration of current nwk_duty
  * @param[out] dev_duty_type  if it includes MESH_PS_DEVICE_DUTY_MASTER, this device is the current NWK-DUTY-MASTER.
- * @param[out] applied_rule  MESH_PS_NETWORK_DUTY_APPLIED_ENTIRE or MESH_PS_NETWORK_DUTY_APPLIED_UPLINK
+ * @param[out] applied_rule  MESH_PS_NETWORK_DUTY_APPLIED_ENTIRE
  *
  * @return
  *    - ESP_OK
@@ -1655,6 +1666,16 @@ esp_err_t esp_mesh_get_network_duty_cycle(int* nwk_duty, int* duration_mins, int
  * @return     the running active duty cycle
  */
 int esp_mesh_get_running_active_duty_cycle(void);
+
+/**
+ * @brief      Duty signaling
+ *
+ * @param[in]  fwd_times  the times of forwarding duty signaling packets
+ *
+ * @return
+ *    - ESP_OK
+ */
+esp_err_t esp_mesh_ps_duty_signaling(int fwd_times);
 
 #ifdef __cplusplus
 }
