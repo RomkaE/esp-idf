@@ -156,18 +156,24 @@ menu "Driver configurations"
 
     endmenu # RTCIO Configuration
     
-    menu "Touch Pad configuration"
+    menu "TOUCH Sensor configuration"
         visible if IDF_TARGET_ESP32
-                
-	    choice TOUCH_PAD_TIMER_IMPLEMENT
-	    bool "Touch Pad Timer Mode"
-	        default TOUCH_PAD_USE_ESP_TIMER
-	    help 
-	        Choose a implementation of timer for button instance.
-	    config TOUCH_PAD_USE_ESP_TIMER
-	        bool "Use ESP Timer"
-	    config TOUCH_PAD_USE_RTOS_TIMER
-	        bool "Use FreeRTOS Timer"
+        
+        config TOUCH_SENSOR_USE_FILTER_TIMER
+	        bool "Use filter functionality based on a SW timers"
+	        default n
+        
+	    choice TOUCH_SENSOR_TIMER_IMPLEMENT
+		    bool "TOUCH Sensor Timer Mode"
+		    depends on TOUCH_SENSOR_USE_FILTER_TIMER
+		    default TOUCH_SENSOR_USE_RTOS_TIMER
+		    help 
+		        Choose a implementation of timer for CAP TOUCH Sensor.
+		        
+		    config TOUCH_SENSOR_USE_ESP_TIMER
+		        bool "Use ESP Timer"
+		    config TOUCH_SENSOR_USE_RTOS_TIMER
+		        bool "Use FreeRTOS Timer"
 	    endchoice
 	    
     endmenu # Touch Pad configuration

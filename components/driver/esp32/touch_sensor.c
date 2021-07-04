@@ -38,7 +38,9 @@
 #include "hal/touch_sensor_types.h"
 #include "hal/touch_sensor_hal.h"
 
-#define USE_ESP_TIMER       CONFIG_TOUCH_PAD_USE_ESP_TIMER
+#if CONFIG_TOUCH_SENSOR_USE_FILTER_TIMER
+
+#define USE_ESP_TIMER       CONFIG_TOUCH_SENSOR_USE_ESP_TIMER
 
 #if USE_ESP_TIMER
 #include "esp_timer.h"
@@ -58,14 +60,17 @@ typedef struct {
     bool enable;
 } touch_pad_filter_t;
 static touch_pad_filter_t *s_touch_pad_filter = NULL;
-// check if touch pad be initialized.
-static uint16_t s_touch_pad_init_bit = 0x0000;
-static filter_cb_t s_filter_cb = NULL;
-static SemaphoreHandle_t rtc_touch_mux = NULL;
 
 #define TOUCH_PAD_FILTER_FACTOR_DEFAULT   (4)   // IIR filter coefficient.
 #define TOUCH_PAD_SHIFT_DEFAULT           (4)   // Increase computing accuracy.
 #define TOUCH_PAD_SHIFT_ROUND_DEFAULT     (8)   // ROUND = 2^(n-1); rounding off for fractional.
+
+#endif
+
+// check if touch pad be initialized.
+static uint16_t s_touch_pad_init_bit = 0x0000;
+static filter_cb_t s_filter_cb = NULL;
+static SemaphoreHandle_t rtc_touch_mux = NULL;
 
 static const char *TOUCH_TAG = "TOUCH_SENSOR";
 #define TOUCH_CHECK(a, str, ret_val) ({                                             \
@@ -101,6 +106,7 @@ esp_err_t touch_pad_isr_register(intr_handler_t fn, void *arg)
     return rtc_isr_register(fn, arg, RTC_CNTL_TOUCH_INT_ST_M);
 }
 
+#if CONFIG_TOUCH_SENSOR_USE_FILTER_TIMER
 static uint32_t _touch_filter_iir(uint32_t in_now, uint32_t out_last, uint32_t k)
 {
     if (k == 0) {
@@ -145,6 +151,8 @@ static void touch_pad_filter_cb(void *arg)
         s_filter_cb(s_touch_pad_filter->raw_val, s_touch_pad_filter->filtered_val);
     }
 }
+
+#endif
 
 esp_err_t touch_pad_set_meas_time(uint16_t sleep_cycle, uint16_t meas_cycle)
 {
@@ -317,10 +325,14 @@ esp_err_t touch_pad_init(void)
 esp_err_t touch_pad_deinit(void)
 {
     TOUCH_CHECK(rtc_touch_mux != NULL, "Touch pad not initialized", ESP_FAIL);
+
+    #if CONFIG_TOUCH_SENSOR_USE_FILTER_TIMER
     if (s_touch_pad_filter != NULL) {
         touch_pad_filter_stop();
         touch_pad_filter_delete();
     }
+    #endif
+
     xSemaphoreTake(rtc_touch_mux, portMAX_DELAY);
     s_touch_pad_init_bit = 0x0000;
     TOUCH_ENTER_CRITICAL();
@@ -338,11 +350,11 @@ static esp_err_t _touch_pad_read(touch_pad_t touch_num, uint16_t *touch_value, t
     if (TOUCH_FSM_MODE_SW == mode) {
         touch_pad_set_group_mask((1 << touch_num), (1 << touch_num), (1 << touch_num));
         touch_pad_sw_start();
-        while (!touch_hal_meas_is_done()) {};     // TODO !!!
+        while (!touch_hal_meas_is_done()) {};
         *touch_value = touch_hal_read_raw_data(touch_num);
         touch_pad_clear_group_mask((1 << touch_num), (1 << touch_num), (1 << touch_num));
     } else if (TOUCH_FSM_MODE_TIMER == mode) {
-        while (!touch_hal_meas_is_done()) {};     // TODO !!!
+        while (!touch_hal_meas_is_done()) {};
         *touch_value = touch_hal_read_raw_data(touch_num);
     } else {
         res = ESP_FAIL;
@@ -368,6 +380,8 @@ esp_err_t touch_pad_read(touch_pad_t touch_num, uint16_t *touch_value)
     return res;
 }
 
+#if CONFIG_TOUCH_SENSOR_USE_FILTER_TIMER
+
 IRAM_ATTR esp_err_t touch_pad_read_raw_data(touch_pad_t touch_num, uint16_t *touch_value)
 {
     TOUCH_CHECK(rtc_touch_mux != NULL, "Touch pad not initialized", ESP_FAIL);
@@ -380,6 +394,19 @@ IRAM_ATTR esp_err_t touch_pad_read_raw_data(touch_pad_t touch_num, uint16_t *tou
     }
     return ESP_OK;
 }
+#else
+IRAM_ATTR esp_err_t touch_pad_read_raw_data(touch_pad_t touch_num, uint16_t *touch_value)
+{
+    TOUCH_CHANNEL_CHECK(touch_num);
+    TOUCH_CHECK(touch_value != NULL, "touch_value", ESP_ERR_INVALID_ARG);
+    //TOUCH_ENTER_CRITICAL_SAFE();    // TODO !?
+    *touch_value = touch_hal_read_raw_data(touch_num);
+    //TOUCH_EXIT_CRITICAL_SAFE();     // TODO !?
+    return ESP_OK;
+}
+#endif
+
+#if CONFIG_TOUCH_SENSOR_USE_FILTER_TIMER
 
 IRAM_ATTR esp_err_t touch_pad_read_filtered(touch_pad_t touch_num, uint16_t *touch_value)
 {
@@ -539,3 +566,5 @@ esp_err_t touch_pad_filter_delete(void)
     xSemaphoreGive(rtc_touch_mux);
     return ESP_OK;
 }
+
+#endif
