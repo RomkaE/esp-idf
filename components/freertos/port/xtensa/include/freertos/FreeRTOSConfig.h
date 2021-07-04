@@ -295,6 +295,7 @@ int xt_clock_freq(void) __attribute__((deprecated));
 #define INCLUDE_pxTaskGetStackStart			1
 
 #define INCLUDE_xSemaphoreGetMutexHolder    1
+#define INCLUDE_xTaskGetSchedulerState      1
 
 /* The priority at which the tick interrupt runs.  This should probably be
    kept at 1. */
@@ -319,14 +320,14 @@ extern void vPortCleanUpTCB ( void *pxTCB );
 
 /* Test FreeRTOS timers (with timer task) and more. */
 /* Some files don't compile if this flag is disabled */
-#define configUSE_TIMERS                    1
+#define configUSE_TIMERS                    CONFIG_FREERTOS_USE_TIMERS
 #define configTIMER_TASK_PRIORITY           CONFIG_FREERTOS_TIMER_TASK_PRIORITY
 #define configTIMER_QUEUE_LENGTH            CONFIG_FREERTOS_TIMER_QUEUE_LENGTH
 #define configTIMER_TASK_STACK_DEPTH        CONFIG_FREERTOS_TIMER_TASK_STACK_DEPTH
 
-#define INCLUDE_xTimerPendFunctionCall      1
+#define INCLUDE_xTimerPendFunctionCall      0
 #define INCLUDE_eTaskGetState               1
-#define configUSE_QUEUE_SETS                1
+#define configUSE_QUEUE_SETS                0
 
 #define configUSE_TICKLESS_IDLE             CONFIG_FREERTOS_USE_TICKLESS_IDLE
 #if configUSE_TICKLESS_IDLE
