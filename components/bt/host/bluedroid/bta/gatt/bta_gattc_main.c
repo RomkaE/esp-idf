@@ -191,7 +191,7 @@ static const UINT8 bta_gattc_st_connected[][BTA_GATTC_NUM_COLS] = {
     /* BTA_GATTC_API_CACHE_CLEAN_EVT    */   {BTA_GATTC_IGNORE,             BTA_GATTC_CONN_ST},
 
     /* BTA_GATTC_INT_CONN_EVT           */   {BTA_GATTC_CONN,               BTA_GATTC_CONN_ST},
-    /* BTA_GATTC_INT_DISCOVER_EVT       */   {BTA_GATTC_START_DISCOVER,     BTA_GATTC_DISCOVER_ST},
+    /* BTA_GATTC_INT_DISCOVER_EVT       */   {BTA_GATTC_IGNORE,             BTA_GATTC_CONN_ST},
     /* BTA_GATTC_DISCOVER_CMPL_EVT       */  {BTA_GATTC_IGNORE,             BTA_GATTC_CONN_ST},
     /* BTA_GATTC_OP_CMPL_EVT            */   {BTA_GATTC_OP_CMPL,            BTA_GATTC_CONN_ST},
 
