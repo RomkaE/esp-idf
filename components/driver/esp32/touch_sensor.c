@@ -23,7 +23,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/xtensa_api.h"
 #include "freertos/semphr.h"
-#include "freertos/timers.h"
+#include "freertos/task.h"
 #include "esp_intr_alloc.h"
 #include "driver/rtc_io.h"
 #include "driver/touch_pad.h"
@@ -38,11 +38,24 @@
 #include "hal/touch_sensor_types.h"
 #include "hal/touch_sensor_hal.h"
 
+#define USE_ESP_TIMER       CONFIG_TOUCH_PAD_USE_ESP_TIMER
+
+#if USE_ESP_TIMER
+#include "esp_timer.h"
+#else
+#include "freertos/timers.h"
+#endif
+
 typedef struct {
+    #if USE_ESP_TIMER
+//    uint32_t period_ms;   // TODO
+    esp_timer_handle_t timer;
+    #else
     TimerHandle_t timer;
+    #endif
     uint16_t filtered_val[TOUCH_PAD_MAX];
     uint16_t raw_val[TOUCH_PAD_MAX];
-    uint32_t filter_period;
+//    uint32_t filter_period;   /// TODO
     uint32_t period;
     bool enable;
 } touch_pad_filter_t;
@@ -127,7 +140,16 @@ static void touch_pad_filter_cb(void *arg)
             s_touch_pad_filter->filtered_val[i] = (s_filtered_temp[i] + TOUCH_PAD_SHIFT_ROUND_DEFAULT) >> TOUCH_PAD_SHIFT_DEFAULT;
         }
     }
+    #if USE_ESP_TIMER
+    esp_err_t res;
+    res = esp_timer_stop(s_touch_pad_filter->timer);
+    if (res != ESP_ERR_INVALID_STATE)
+      ESP_ERROR_CHECK(res);
+    res = esp_timer_start_once(s_touch_pad_filter->timer, s_touch_pad_filter->period * 1000);
+    ESP_ERROR_CHECK(res);
+    #else
     xTimerReset(s_touch_pad_filter->timer, portMAX_DELAY);
+    #endif
     xSemaphoreGive(rtc_touch_mux);
     if (s_filter_cb != NULL) {
         //return the raw data and filtered data.
@@ -392,7 +414,9 @@ esp_err_t touch_pad_set_filter_period(uint32_t new_period_ms)
     esp_err_t ret = ESP_OK;
     xSemaphoreTake(rtc_touch_mux, portMAX_DELAY);
     if (s_touch_pad_filter != NULL) {
+        #if !USE_ESP_TIMER
         xTimerChangePeriod(s_touch_pad_filter->timer, new_period_ms / portTICK_PERIOD_MS, portMAX_DELAY);
+        #endif
         s_touch_pad_filter->period = new_period_ms;
     } else {
         ESP_LOGE(TOUCH_TAG, "Touch pad filter deleted");
@@ -433,8 +457,19 @@ esp_err_t touch_pad_filter_start(uint32_t filter_period_ms)
         }
     }
     if (s_touch_pad_filter->timer == NULL) {
+        #if USE_ESP_TIMER
+        const esp_timer_create_args_t timer_args = {
+               .callback = touch_pad_filter_cb,
+               .arg = NULL,
+               .dispatch_method = ESP_TIMER_TASK,
+               .name = "filter_tmr"
+        };
+        esp_err_t res = esp_timer_create(&timer_args, &s_touch_pad_filter->timer);
+        ESP_ERROR_CHECK(res);
+        #else
         s_touch_pad_filter->timer = xTimerCreate("filter_tmr", filter_period_ms / portTICK_PERIOD_MS, pdFALSE,
                                     NULL, (TimerCallbackFunction_t) touch_pad_filter_cb);
+        #endif
         if (s_touch_pad_filter->timer == NULL) {
             free(s_touch_pad_filter);
             s_touch_pad_filter = NULL;
@@ -458,7 +493,14 @@ esp_err_t touch_pad_filter_stop(void)
     esp_err_t ret = ESP_OK;
     xSemaphoreTake(rtc_touch_mux, portMAX_DELAY);
     if (s_touch_pad_filter != NULL) {
+        #if USE_ESP_TIMER
+        esp_err_t res;
+        res = esp_timer_stop(s_touch_pad_filter->timer);
+        if (res != ESP_ERR_INVALID_STATE)
+            ESP_ERROR_CHECK(res);
+        #else
         xTimerStop(s_touch_pad_filter->timer, portMAX_DELAY);
+        #endif
     } else {
         ESP_LOGE(TOUCH_TAG, "Touch pad filter deleted");
         ret = ESP_ERR_INVALID_STATE;
@@ -474,8 +516,17 @@ esp_err_t touch_pad_filter_delete(void)
     xSemaphoreTake(rtc_touch_mux, portMAX_DELAY);
     if (s_touch_pad_filter != NULL) {
         if (s_touch_pad_filter->timer != NULL) {
+            #if USE_ESP_TIMER
+            esp_err_t res;
+            res = esp_timer_stop(s_touch_pad_filter->timer);
+            if (res != ESP_ERR_INVALID_STATE)
+                ESP_ERROR_CHECK(res);
+            res = esp_timer_delete(s_touch_pad_filter->timer);
+            ESP_ERROR_CHECK(res);
+            #else
             xTimerStop(s_touch_pad_filter->timer, portMAX_DELAY);
             xTimerDelete(s_touch_pad_filter->timer, portMAX_DELAY);
+            #endif
             s_touch_pad_filter->timer = NULL;
         }
         free(s_touch_pad_filter);

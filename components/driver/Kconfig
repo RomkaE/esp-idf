@@ -155,6 +155,22 @@ menu "Driver configurations"
                 If user use this array, please enable this configuration.
 
     endmenu # RTCIO Configuration
+    
+    menu "Touch Pad configuration"
+        visible if IDF_TARGET_ESP32
+                
+	    choice TOUCH_PAD_TIMER_IMPLEMENT
+	    bool "Touch Pad Timer Mode"
+	        default TOUCH_PAD_USE_ESP_TIMER
+	    help 
+	        Choose a implementation of timer for button instance.
+	    config TOUCH_PAD_USE_ESP_TIMER
+	        bool "Use ESP Timer"
+	    config TOUCH_PAD_USE_RTOS_TIMER
+	        bool "Use FreeRTOS Timer"
+	    endchoice
+	    
+    endmenu # Touch Pad configuration
 
     menu "GPIO Configuration"
         visible if IDF_TARGET_ESP32
