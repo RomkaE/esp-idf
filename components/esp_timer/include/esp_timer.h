@@ -171,6 +171,8 @@ esp_err_t esp_timer_start_periodic(esp_timer_handle_t timer, uint64_t period);
  */
 esp_err_t esp_timer_stop(esp_timer_handle_t timer);
 
+bool esp_timer_get_status(esp_timer_handle_t timer);
+
 /**
  * @brief Delete an esp_timer instance
  *

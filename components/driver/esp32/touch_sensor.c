@@ -48,14 +48,12 @@
 
 typedef struct {
     #if USE_ESP_TIMER
-//    uint32_t period_ms;   // TODO
     esp_timer_handle_t timer;
     #else
     TimerHandle_t timer;
     #endif
     uint16_t filtered_val[TOUCH_PAD_MAX];
     uint16_t raw_val[TOUCH_PAD_MAX];
-//    uint32_t filter_period;   /// TODO
     uint32_t period;
     bool enable;
 } touch_pad_filter_t;
@@ -140,16 +138,7 @@ static void touch_pad_filter_cb(void *arg)
             s_touch_pad_filter->filtered_val[i] = (s_filtered_temp[i] + TOUCH_PAD_SHIFT_ROUND_DEFAULT) >> TOUCH_PAD_SHIFT_DEFAULT;
         }
     }
-    #if USE_ESP_TIMER
-    esp_err_t res;
-    res = esp_timer_stop(s_touch_pad_filter->timer);
-    if (res != ESP_ERR_INVALID_STATE)
-      ESP_ERROR_CHECK(res);
-    res = esp_timer_start_once(s_touch_pad_filter->timer, s_touch_pad_filter->period * 1000);
-    ESP_ERROR_CHECK(res);
-    #else
-    xTimerReset(s_touch_pad_filter->timer, portMAX_DELAY);
-    #endif
+
     xSemaphoreGive(rtc_touch_mux);
     if (s_filter_cb != NULL) {
         //return the raw data and filtered data.
@@ -349,11 +338,11 @@ static esp_err_t _touch_pad_read(touch_pad_t touch_num, uint16_t *touch_value, t
     if (TOUCH_FSM_MODE_SW == mode) {
         touch_pad_set_group_mask((1 << touch_num), (1 << touch_num), (1 << touch_num));
         touch_pad_sw_start();
-        while (!touch_hal_meas_is_done()) {};
+        while (!touch_hal_meas_is_done()) {};     // TODO !!!
         *touch_value = touch_hal_read_raw_data(touch_num);
         touch_pad_clear_group_mask((1 << touch_num), (1 << touch_num), (1 << touch_num));
     } else if (TOUCH_FSM_MODE_TIMER == mode) {
-        while (!touch_hal_meas_is_done()) {};
+        while (!touch_hal_meas_is_done()) {};     // TODO !!!
         *touch_value = touch_hal_read_raw_data(touch_num);
     } else {
         res = ESP_FAIL;
@@ -414,10 +403,22 @@ esp_err_t touch_pad_set_filter_period(uint32_t new_period_ms)
     esp_err_t ret = ESP_OK;
     xSemaphoreTake(rtc_touch_mux, portMAX_DELAY);
     if (s_touch_pad_filter != NULL) {
-        #if !USE_ESP_TIMER
+        #if USE_ESP_TIMER
+        if ((esp_timer_get_status(s_touch_pad_filter->timer) == true) &&
+            (s_touch_pad_filter->period != new_period_ms))
+        {
+          esp_err_t res;
+          res = esp_timer_stop(s_touch_pad_filter->timer);
+          if (res != ESP_ERR_INVALID_STATE)
+            ESP_ERROR_CHECK(res);
+          res = esp_timer_start_periodic(s_touch_pad_filter->timer, new_period_ms * 1000);
+          ESP_ERROR_CHECK(res);
+        }
+        #else
         xTimerChangePeriod(s_touch_pad_filter->timer, new_period_ms / portTICK_PERIOD_MS, portMAX_DELAY);
         #endif
         s_touch_pad_filter->period = new_period_ms;
+
     } else {
         ESP_LOGE(TOUCH_TAG, "Touch pad filter deleted");
         ret = ESP_ERR_INVALID_STATE;
@@ -466,9 +467,12 @@ esp_err_t touch_pad_filter_start(uint32_t filter_period_ms)
         };
         esp_err_t res = esp_timer_create(&timer_args, &s_touch_pad_filter->timer);
         ESP_ERROR_CHECK(res);
+        res = esp_timer_start_periodic(s_touch_pad_filter->timer, filter_period_ms * 1000);
+        ESP_ERROR_CHECK(res);
         #else
-        s_touch_pad_filter->timer = xTimerCreate("filter_tmr", filter_period_ms / portTICK_PERIOD_MS, pdFALSE,
+        s_touch_pad_filter->timer = xTimerCreate("filter_tmr", filter_period_ms / portTICK_PERIOD_MS, pdTRUE,
                                     NULL, (TimerCallbackFunction_t) touch_pad_filter_cb);
+        xTimerStart(s_touch_pad_filter->timer, portMAX_DELAY);
         #endif
         if (s_touch_pad_filter->timer == NULL) {
             free(s_touch_pad_filter);
