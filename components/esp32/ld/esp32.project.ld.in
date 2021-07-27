@@ -346,6 +346,12 @@ SECTIONS
 
   _flash_rodata_align = ALIGNOF(.flash.rodata);
 
+  .flash.rodata_noload (NOLOAD) :
+  {
+    . = ALIGN (4);
+    mapping[rodata_noload]
+  } > default_rodata_seg
+
   .flash.text :
   {
     _stext = .;
