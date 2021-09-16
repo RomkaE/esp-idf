@@ -187,11 +187,7 @@ esp_err_t IRAM_ATTR esp_timer_stop(esp_timer_handle_t timer)
 
 bool esp_timer_get_status(esp_timer_handle_t timer)
 {
-  bool status;
-  timer_list_lock();
-  status = timer_armed(timer);
-  timer_list_unlock();
-  return status;
+  return timer_armed(timer);
 }
 
 esp_err_t esp_timer_delete(esp_timer_handle_t timer)
