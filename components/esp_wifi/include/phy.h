@@ -93,6 +93,21 @@ uint8_t phy_dig_reg_backup(bool backup_en, uint32_t *mem_addr);
 void phy_freq_mem_backup(bool backup_en, uint32_t *mem);
 #endif
 
+
+#if CONFIG_ESP_PHY_ENABLE_USB
+/**
+ * @brief Enable or disable USB when phy init.
+ */
+void phy_bbpll_en_usb(bool en);
+#endif
+
+#if CONFIG_IDF_TARGET_ESP32S2
+/**
+ * @brief Phy version select for ESP32S2
+ */
+void phy_eco_version_sel(uint8_t chip_ver);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

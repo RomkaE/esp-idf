@@ -28,8 +28,11 @@
 #include "mbc_tcp_slave.h"          // for tcp slave mb controller defines
 #include "port_tcp_slave.h"         // for tcp slave port defines
 
+#if MB_TCP_ENABLED
+
 // Shared pointer to interface structure
 static mb_slave_interface_t* mbs_interface_ptr = NULL;
+static const char *TAG = "MB_CONTROLLER_SLAVE";
 
 // Modbus task function
 static void modbus_tcp_slave_task(void *pvParameters)
@@ -85,7 +88,6 @@ static esp_err_t mbc_tcp_slave_start(void)
     eMBPortProto proto = (mbs_opts->mbs_comm.ip_mode == MB_MODE_TCP) ? MB_PROTO_TCP : MB_PROTO_UDP;
     eMBPortIpVer ip_ver = (mbs_opts->mbs_comm.ip_addr_type == MB_IPV4) ? MB_PORT_IPV4 : MB_PORT_IPV6;
     vMBTCPPortSlaveSetNetOpt(mbs_opts->mbs_comm.ip_netif_ptr, ip_ver, proto, (char*)mbs_opts->mbs_comm.ip_addr);
-    vMBTCPPortSlaveStartServerTask();
 
     status = eMBEnable();
     MB_SLAVE_CHECK((status == MB_ENOERR), ESP_ERR_INVALID_STATE,
@@ -116,7 +118,7 @@ static esp_err_t mbc_tcp_slave_destroy(void)
     (void)vQueueDelete(mbs_opts->mbs_notification_queue_handle);
     (void)vEventGroupDelete(mbs_opts->mbs_event_group);
     (void)vMBTCPPortClose();
-
+    mbs_interface_ptr = NULL;
     vMBPortSetMode((UCHAR)MB_PORT_INACTIVE);
     return ESP_OK;
 }
@@ -185,12 +187,13 @@ esp_err_t mbc_tcp_slave_create(void** handler)
     MB_SLAVE_CHECK((mbs_opts->mbs_notification_queue_handle != NULL),
             ESP_ERR_NO_MEM, "mb notify queue creation error.");
     // Create Modbus controller task
-    status = xTaskCreate((void*)&modbus_tcp_slave_task,
+    status = xTaskCreatePinnedToCore((void*)&modbus_tcp_slave_task,
                             "modbus_tcp_slave_task",
                             MB_CONTROLLER_STACK_SIZE,
                             NULL,
                             MB_CONTROLLER_PRIORITY,
-                            &mbs_opts->mbs_task_handle);
+                            &mbs_opts->mbs_task_handle,
+                            MB_PORT_TASK_AFFINITY);
     if (status != pdPASS) {
         vTaskDelete(mbs_opts->mbs_task_handle);
         MB_SLAVE_CHECK((status == pdPASS), ESP_ERR_NO_MEM,
@@ -220,3 +223,5 @@ esp_err_t mbc_tcp_slave_create(void** handler)
 
     return ESP_OK;
 }
+
+#endif //#if MB_TCP_ENABLED

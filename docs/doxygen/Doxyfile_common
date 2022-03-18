@@ -34,6 +34,7 @@ INPUT = \
     $(IDF_PATH)/components/esp_wifi/include/esp_now.h \
     $(IDF_PATH)/components/esp_wifi/include/esp_wifi_default.h \
     $(IDF_PATH)/components/esp_wifi/include/esp_mesh.h \
+    $(IDF_PATH)/components/wpa_supplicant/include/esp_supplicant/esp_dpp.h \
     $(IDF_PATH)/components/esp_event/include/esp_event.h \
     $(IDF_PATH)/components/esp_event/include/esp_event_base.h \
     $(IDF_PATH)/components/esp_event/include/esp_event_legacy.h \
@@ -224,6 +225,7 @@ MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 PREDEFINED             = \
     $(ENV_DOXYGEN_DEFINES) \
+    __DOXYGEN__=1 \
     __attribute__(x)= \
 	_Static_assert()= \
     IDF_DEPRECATED(X)= \

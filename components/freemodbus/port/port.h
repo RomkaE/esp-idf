@@ -12,6 +12,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * FreeModbus Libary: ESP32 Port
+ * Copyright (C) 2010 Christian Walter <cwalter@embedded-solutions.at>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *   derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * IF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * File: $Id: port.h,v 1.1 2010/06/06 13:07:20 wolti Exp $
+ */
 
 #ifndef PORT_COMMON_H_
 #define PORT_COMMON_H_
@@ -50,6 +78,9 @@
 #define MB_TCP_STACK_SIZE               (CONFIG_FMB_PORT_TASK_STACK_SIZE)
 #define MB_TCP_TASK_PRIO                (CONFIG_FMB_PORT_TASK_PRIO)
 
+// The task affinity for Modbus stack tasks
+#define MB_PORT_TASK_AFFINITY           (CONFIG_FMB_PORT_TASK_AFFINITY)
+
 #define MB_TCP_READ_TIMEOUT_MS          (100) // read timeout in mS
 #define MB_TCP_READ_TIMEOUT             (pdMS_TO_TICKS(MB_TCP_READ_TIMEOUT_MS))
 #define MB_TCP_SEND_TIMEOUT_MS          (500) // send event timeout in mS
@@ -57,6 +88,8 @@
 #define MB_TCP_PORT_MAX_CONN            (CONFIG_FMB_TCP_PORT_MAX_CONN)
 
 #define MB_TCP_FRAME_LOG_BUFSIZE        (256)
+
+#define MB_PORT_HAS_CLOSE               (1) // Define to explicitly close port on destroy
 
 // Define number of timer reloads per 1 mS
 #define MB_TIMER_TICS_PER_MS            (20UL)

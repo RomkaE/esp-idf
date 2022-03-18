@@ -88,6 +88,7 @@ const static qio_info_t chip_data[] = {
     { "WinBond",     0xEF,   0x4000, 0xFF00,    read_status_16b_rdsr_rdsr2, write_status_16b_wrsr,      9 },
     { "GD",          0xC8,   0x6000, 0xFF00,    read_status_16b_rdsr_rdsr2, write_status_16b_wrsr,      9 },
     { "XM25QU64A",   0x20,   0x3817, 0xFFFF,    read_status_8b_xmc25qu64a,  write_status_8b_xmc25qu64a, 6 },
+    { "TH",          0xcd,   0x6000, 0xFF00,    read_status_16b_rdsr_rdsr2, write_status_16b_wrsr,      9 },
 
     /* Final entry is default entry, if no other IDs have matched.
 
@@ -110,14 +111,6 @@ static esp_err_t enable_qio_mode(read_status_fn_t read_status_fn,
 
    The command passed here is always the on-the-wire command given to the SPI flash unit.
 */
-
-/* dummy_len_plus values defined in ROM for SPI flash configuration */
-uint32_t bootloader_read_flash_id(void)
-{
-    uint32_t id = bootloader_execute_flash_command(CMD_RDID, 0, 0, 24);
-    id = ((id & 0xff) << 16) | ((id >> 16) & 0xff) | (id & 0xff00);
-    return id;
-}
 
 void bootloader_enable_qio_mode(void)
 {

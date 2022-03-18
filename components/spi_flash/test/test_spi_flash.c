@@ -15,6 +15,8 @@
 #include "esp_rom_sys.h"
 #include "esp_timer.h"
 
+#include "bootloader_flash.h"   //for bootloader_flash_xmc_startup
+
 #include "sdkconfig.h"
 #if CONFIG_IDF_TARGET_ESP32
 #include "esp32/rom/spi_flash.h"
@@ -310,23 +312,17 @@ TEST_CASE("Test spi_flash read/write performance", "[spi_flash]")
 
     TEST_ASSERT_EQUAL_HEX8_ARRAY(data_to_write, data_read, total_len);
 
-// Data checks are disabled when PSRAM is used or in Freertos compliance check test
-#if !CONFIG_SPIRAM && !CONFIG_FREERTOS_CHECK_PORT_CRITICAL_COMPLIANCE
-#  define CHECK_DATA(suffix) TEST_PERFORMANCE_CCOMP_GREATER_THAN(FLASH_SPEED_BYTE_PER_SEC_LEGACY_##suffix, "%d", speed_##suffix)
-#  define CHECK_ERASE(var) TEST_PERFORMANCE_CCOMP_GREATER_THAN(FLASH_SPEED_BYTE_PER_SEC_LEGACY_ERASE, "%d", var)
-#else
-#  define CHECK_DATA(suffix) ((void)speed_##suffix)
-#  define CHECK_ERASE(var) ((void)var)
-#endif
+#define LOG_DATA(suffix) IDF_LOG_PERFORMANCE("FLASH_SPEED_BYTE_PER_SEC_LEGACY_"#suffix, "%d", speed_##suffix)
+#define LOG_ERASE(var) IDF_LOG_PERFORMANCE("FLASH_SPEED_BYTE_PER_SEC_LEGACY_ERASE", "%d", var)
 
-    CHECK_DATA(WR_4B);
-    CHECK_DATA(RD_4B);
-    CHECK_DATA(WR_2KB);
-    CHECK_DATA(RD_2KB);
+    LOG_DATA(WR_4B);
+    LOG_DATA(RD_4B);
+    LOG_DATA(WR_2KB);
+    LOG_DATA(RD_2KB);
 
     // Erase time may vary a lot, can increase threshold if this fails with a reasonable speed
-    CHECK_ERASE(erase_1);
-    CHECK_ERASE(erase_2);
+    LOG_ERASE(erase_1);
+    LOG_ERASE(erase_2);
 
     free(data_to_write);
     free(data_read);
@@ -419,3 +415,21 @@ TEST_CASE("rom unlock will not erase QE bit", "[spi_flash]")
     TEST_ASSERT(status & 0x40);
 }
 #endif
+
+static IRAM_ATTR NOINLINE_ATTR void test_xmc_startup(void)
+{
+    extern void spi_flash_disable_interrupts_caches_and_other_cpu(void);
+    extern void spi_flash_enable_interrupts_caches_and_other_cpu(void);
+    esp_err_t ret = ESP_OK;
+
+    spi_flash_disable_interrupts_caches_and_other_cpu();
+    ret = bootloader_flash_xmc_startup();
+    spi_flash_enable_interrupts_caches_and_other_cpu();
+
+    TEST_ASSERT_EQUAL(ESP_OK, ret);
+}
+
+TEST_CASE("bootloader_flash_xmc_startup can be called when cache disabled", "[spi_flash]")
+{
+    test_xmc_startup();
+}

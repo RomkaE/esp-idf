@@ -26,9 +26,6 @@ components/esp32/include/esp32/cache_err_int.h
 components/driver/include/driver/sdmmc_defs.h
 components/driver/include/driver/sdmmc_types.h
 
-components/lwip/include/apps/dhcpserver/dhcpserver_options.h
-components/lwip/include/apps/dhcpserver/dhcpserver.h
-
 components/lwip/lwip/src/include/lwip/priv/memp_std.h
 components/lwip/port/esp32/include/arch/cc.h
 components/lwip/port/esp32/include/debug/lwip_debug.h
@@ -41,6 +38,7 @@ components/spi_flash/include/spi_flash_chip_mxic.h
 components/spi_flash/include/spi_flash_chip_gd.h
 components/spi_flash/include/spi_flash_chip_winbond.h
 components/spi_flash/include/spi_flash_chip_boya.h
+components/spi_flash/include/spi_flash_chip_th.h
 components/spi_flash/include/memspi_host_driver.h
 components/spi_flash/include/spi_flash_chip_driver.h
 components/spi_flash/include/spi_flash_chip_generic.h
@@ -52,6 +50,7 @@ components/wpa_supplicant/port/
 
 components/mbedtls/port/include/
 components/mbedtls/mbedtls/include/mbedtls/
+components/mbedtls/mbedtls/include/psa/
 
 components/coap/
 components/nghttp/

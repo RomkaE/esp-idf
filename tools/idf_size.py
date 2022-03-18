@@ -6,19 +6,8 @@
 # Includes information which is not shown in "xtensa-esp32-elf-size",
 # or easy to parse from "xtensa-esp32-elf-objdump" or raw map files.
 #
-# Copyright 2017-2021 Espressif Systems (Shanghai) CO LTD
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-FileCopyrightText: 2017-2022 Espressif Systems (Shanghai) CO LTD
+# SPDX-License-Identifier: Apache-2.0
 #
 from __future__ import division, print_function, unicode_literals
 
@@ -244,11 +233,13 @@ class LinkingSections(object):
             split_name = section.split('.')
             if len(split_name) > 1:
                 # If the section has a memory type, update the type and try to display the type properly
-                assert len(split_name) == 3 and split_name[0] == '', 'Unexpected section name'
+                assert split_name[0] == '', 'Unexpected section name "{}"'.format(section)
                 memory_name = '.iram' if 'iram' in split_name[1] else\
                               '.dram' if 'dram' in split_name[1] else\
                               '.flash' if 'flash' in split_name[1] else\
                               '.' + split_name[1]
+                if len(split_name) < 3:
+                    split_name.append('')   # in order to avoid failures in the following lines
                 display_name_list[i] = 'DRAM .' + split_name[2] if 'dram' in split_name[1] else\
                                        'IRAM' + split_name[1].replace('iram', '') + ' .' + split_name[2] if 'iram' in split_name[1] else\
                                        'Flash .' + split_name[2] if 'flash' in split_name[1] else\
@@ -281,11 +272,10 @@ def load_map_data(map_file):  # type: (TextIO) -> Tuple[str, Dict, Dict]
     detected_chip = detect_target_chip(map_file)
     sections = load_sections(map_file)
 
-    # Exclude the .dummy section, which usually means shared region among I/D buses
-    dummy_keys = [key for key in sections if key.endswith(('.dummy'))]
-    if dummy_keys:
-        sections.pop(*dummy_keys)
-
+    # Exclude the dummy and .text_end section, which usually means shared region among I/D buses
+    for key in list(sections.keys()):
+        if key.endswith(('dummy', '.text_end')):
+            sections.pop(key)
     return detected_chip, segments, sections
 
 
@@ -370,7 +360,10 @@ def load_sections(map_file):  # type: (TextIO) -> Dict
     RE_FULL_LINE = re.compile(r'\s*(?P<sym_name>\S*) +0x(?P<address>[\da-f]+) +0x(?P<size>[\da-f]+)\s*(?P<file>.*)$')
 
     # Extract archive and object_file from the file_info field
-    RE_FILE = re.compile(r'((?P<archive>[^ ]+\.a)?\(?(?P<object_file>[^ ]+\.(o|obj))\)?)')
+    # The object file extention (.obj or .o) is optional including the dot. This is necessary for some third-party
+    # libraries. Since the dot is optional and the search gready the parsing of the object name must stop at ). Hence
+    # the [^ )] part of the regex.
+    RE_FILE = re.compile(r'((?P<archive>[^ ]+\.a)?\(?(?P<object_file>[^ )]+(\.(o|obj))?)\)?)')
 
     def dump_src_line(src):  # type: (Dict) -> str
         return '%s(%s) addr: 0x%08x, size: 0x%x+%d' % (src['sym_name'], src['file'], src['address'], src['size'], src['fill'])
@@ -441,7 +434,7 @@ def load_sections(map_file):  # type: (TextIO) -> Dict
 
             # Extract archive and file information
             n = RE_FILE.match(m.group('file'))
-            assert n
+            assert n, 'Archive and file information not found for "{}"'.format(m.group('file'))
 
             archive = n.group('archive')
             if archive is None:
@@ -616,15 +609,12 @@ class StructureForSummary(object):
         r = StructureForSummary()
 
         diram_filter = filter(in_diram, segments)
-        # TODO: We assume all DIRAM region are covered by both I/D segments. If not, the total size cannot be calculated accurately. Add check for this.
         r.diram_total = int(get_size(diram_filter) / 2)
 
         dram_filter = filter(in_dram, segments)
         r.dram_total = get_size(dram_filter)
         iram_filter = filter(in_iram, segments)
         r.iram_total = get_size(iram_filter)
-        if r.diram_total == 0:
-            r.diram_total = r.dram_total + r.iram_total
 
         def filter_in_section(sections, section_to_check):  # type: (Iterable[MemRegions.Region], str) -> List[MemRegions.Region]
             return list(filter(lambda x: LinkingSections.in_section(x.section, section_to_check), sections))  # type: ignore
@@ -632,8 +622,6 @@ class StructureForSummary(object):
         dram_sections = list(filter(in_dram, sections))
         iram_sections = list(filter(in_iram, sections))
         diram_sections = list(filter(in_diram, sections))
-        if not diram_sections:
-            diram_sections = dram_sections + iram_sections
         flash_sections = filter_in_section(sections, 'flash')
 
         dram_data_list = filter_in_section(dram_sections, 'data')
@@ -1136,7 +1124,7 @@ class StructureForArchiveSymbols(object):
 
 
 def get_archive_symbols(sections, archive, as_json=False, sections_diff=None):  # type: (Dict, str, bool, Dict) -> str
-    diff_en = sections_diff is not None
+    diff_en = bool(sections_diff)
     current = StructureForArchiveSymbols.get(archive, sections)
     reference = StructureForArchiveSymbols.get(archive, sections_diff) if sections_diff else {}
 
@@ -1160,19 +1148,29 @@ def get_archive_symbols(sections, archive, as_json=False, sections_diff=None):  
         def _get_item_pairs(name, section):  # type: (str, collections.OrderedDict) -> collections.OrderedDict
             return collections.OrderedDict([(key.replace(name + '.', ''), val) for key, val in iteritems(section)])
 
+        def _get_max_len(symbols_dict):  # type: (Dict) -> Tuple[int, int]
+            # the lists have 0 in them because max() doesn't work with empty lists
+            names_max_len = 0
+            numbers_max_len = 0
+            for t, s in iteritems(symbols_dict):
+                numbers_max_len = max([numbers_max_len] + [len(str(x)) for _, x in iteritems(s)])
+                names_max_len = max([names_max_len] + [len(x) for x in _get_item_pairs(t, s)])
+
+            return names_max_len, numbers_max_len
+
         def _get_output(section_symbols):  # type: (Dict) -> str
             output = ''
+            names_max_len, numbers_max_len  = _get_max_len(section_symbols)
             for t, s in iteritems(section_symbols):
                 output += '{}Symbols from section: {}{}'.format(os.linesep, t, os.linesep)
                 item_pairs = _get_item_pairs(t, s)
-                output += ' '.join(['{}({})'.format(key, val) for key, val in iteritems(item_pairs)])
+                for key, val in iteritems(item_pairs):
+                    output += ' '.join([('\t{:<%d} : {:>%d}\n' % (names_max_len,numbers_max_len)).format(key, val)])
                 section_total = sum([val for _, val in iteritems(item_pairs)])
-                output += '{}Section total: {}{}'.format(os.linesep if section_total > 0 else '',
-                                                         section_total,
-                                                         os.linesep)
+                output += 'Section total: {}{}'.format(section_total, os.linesep)
             return output
 
-        output = 'Symbols within the archive: {} (Not all symbols may be reported){}'.format(archive, os.linesep)
+        output = '{}Symbols within the archive: {} (Not all symbols may be reported){}'.format(os.linesep, archive, os.linesep)
         if diff_en:
 
             def _generate_line_tuple(curr, ref, name):

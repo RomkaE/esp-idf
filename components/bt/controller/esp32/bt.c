@@ -97,7 +97,7 @@ do{\
 
 /* SPIRAM Configuration */
 #if CONFIG_SPIRAM_USE_MALLOC
-#define BTDM_MAX_QUEUE_NUM       (5)
+#define BTDM_MAX_QUEUE_NUM       (6)
 #endif
 
 /* Types definition
@@ -244,6 +244,8 @@ extern uint8_t coex_schm_curr_period_get(void);
 extern void * coex_schm_curr_phase_get(void);
 extern int coex_wifi_channel_get(uint8_t *primary, uint8_t *secondary);
 extern int coex_register_wifi_channel_change_callback(void *cb);
+/* Shutdown */
+extern void esp_bt_controller_shutdown(void);
 
 extern char _bss_start_btdm;
 extern char _bss_end_btdm;
@@ -1520,9 +1522,18 @@ esp_err_t esp_bt_controller_deinit(void)
         esp_pm_lock_delete(s_light_sleep_pm_lock);
         s_light_sleep_pm_lock = NULL;
     }
-    esp_timer_stop(s_btdm_slp_tmr);
-    esp_timer_delete(s_btdm_slp_tmr);
-    s_btdm_slp_tmr = NULL;
+
+    if (s_pm_lock != NULL) {
+        esp_pm_lock_delete(s_pm_lock);
+        s_pm_lock = NULL;
+    }
+
+    if (s_btdm_slp_tmr != NULL) {
+        esp_timer_stop(s_btdm_slp_tmr);
+        esp_timer_delete(s_btdm_slp_tmr);
+        s_btdm_slp_tmr = NULL;
+    }
+
     s_pm_lock_acquired = false;
 #endif
     semphr_delete_wrapper(s_wakeup_req_sem);
@@ -1547,13 +1558,13 @@ esp_err_t esp_bt_controller_deinit(void)
 
 static void bt_shutdown(void)
 {
-    esp_err_t ret = ESP_OK;
-    ESP_LOGD(BTDM_LOG_TAG, "stop Bluetooth");
-
-    ret = esp_bt_controller_disable();
-    if (ESP_OK != ret) {
-        ESP_LOGW(BTDM_LOG_TAG, "controller disable ret=%d", ret);
+    if (btdm_controller_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
+        return;
     }
+
+    esp_bt_controller_shutdown();
+    esp_phy_disable();
+
     return;
 }
 

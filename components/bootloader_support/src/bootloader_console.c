@@ -27,6 +27,7 @@
 #include "esp32s2/rom/usb/usb_common.h"
 #elif CONFIG_IDF_TARGET_ESP32C3
 #include "esp32c3/rom/ets_sys.h"
+#include "esp32c3/rom/uart.h"
 #endif
 #include "esp_rom_gpio.h"
 #include "esp_rom_uart.h"
@@ -75,10 +76,12 @@ void bootloader_console_init(void)
         // Route GPIO signals to/from pins
         const uint32_t tx_idx = uart_periph_signal[uart_num].tx_sig;
         const uint32_t rx_idx = uart_periph_signal[uart_num].rx_sig;
+        gpio_hal_iomux_func_sel(GPIO_PIN_MUX_REG[uart_rx_gpio], PIN_FUNC_GPIO);
         PIN_INPUT_ENABLE(GPIO_PIN_MUX_REG[uart_rx_gpio]);
         esp_rom_gpio_pad_pullup_only(uart_rx_gpio);
         esp_rom_gpio_connect_out_signal(uart_tx_gpio, tx_idx, 0, 0);
         esp_rom_gpio_connect_in_signal(uart_rx_gpio, rx_idx, 0);
+        gpio_hal_iomux_func_sel(GPIO_PIN_MUX_REG[uart_tx_gpio], PIN_FUNC_GPIO);
         // Enable the peripheral
         periph_ll_enable_clk_clear_rst(PERIPH_UART0_MODULE + uart_num);
     }
@@ -111,3 +114,11 @@ void bootloader_console_init(void)
     esp_rom_install_channel_putc(1, bootloader_console_write_char_usb);
 }
 #endif //CONFIG_ESP_CONSOLE_USB_CDC
+
+#ifdef CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+void bootloader_console_init(void)
+{
+    UartDevice *uart = GetUartDevice();
+    uart->buff_uart_no = ESP_ROM_USB_SERIAL_DEVICE_NUM;
+}
+#endif //CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG

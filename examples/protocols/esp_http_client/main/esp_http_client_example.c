@@ -38,6 +38,9 @@ static const char *TAG = "HTTP_CLIENT";
 extern const char howsmyssl_com_root_cert_pem_start[] asm("_binary_howsmyssl_com_root_cert_pem_start");
 extern const char howsmyssl_com_root_cert_pem_end[]   asm("_binary_howsmyssl_com_root_cert_pem_end");
 
+extern const char dl_espressif_com_root_cert_pem_start[] asm("_binary_dl_espressif_com_root_cert_pem_start");
+extern const char dl_espressif_com_root_cert_pem_end[]   asm("_binary_dl_espressif_com_root_cert_pem_end");
+
 esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 {
     static char *output_buffer;  // Buffer to store response of http request from event handler
@@ -95,14 +98,14 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             int mbedtls_err = 0;
             esp_err_t err = esp_tls_get_and_clear_last_error(evt->data, &mbedtls_err, NULL);
             if (err != 0) {
-                if (output_buffer != NULL) {
-                    free(output_buffer);
-                    output_buffer = NULL;
-                }
-                output_len = 0;
                 ESP_LOGI(TAG, "Last esp error code: 0x%x", err);
                 ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
             }
+            if (output_buffer != NULL) {
+                free(output_buffer);
+                output_buffer = NULL;
+            }
+            output_len = 0;
             break;
     }
     return ESP_OK;
@@ -632,8 +635,9 @@ static void http_native_request(void)
 static void http_partial_download(void)
 {
     esp_http_client_config_t config = {
-        .url = "http://jigsaw.w3.org/HTTP/TE/foo.txt",
+        .url = "https://dl.espressif.com/dl/esp-idf/ci/esp_http_client_demo.txt",
         .event_handler = _http_event_handler,
+        .cert_pem = dl_espressif_com_root_cert_pem_start,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
 

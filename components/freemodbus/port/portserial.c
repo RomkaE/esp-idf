@@ -13,9 +13,8 @@
  * limitations under the License.
  */
 /*
- * FreeModbus Libary: ESP32 Port Demo Application
+ * FreeModbus Libary: ESP32 Port
  * Copyright (C) 2010 Christian Walter <cwalter@embedded-solutions.at>
- *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -249,8 +248,10 @@ BOOL xMBPortSerialInit(UCHAR ucPORT, ULONG ulBaudRate,
     uart_set_always_rx_timeout(ucUartNumber, true);
 
     // Create a task to handle UART events
-    BaseType_t xStatus = xTaskCreate(vUartTask, "uart_queue_task", MB_SERIAL_TASK_STACK_SIZE,
-                                        NULL, MB_SERIAL_TASK_PRIO, &xMbTaskHandle);
+    BaseType_t xStatus = xTaskCreatePinnedToCore(vUartTask, "uart_queue_task",
+                                                    MB_SERIAL_TASK_STACK_SIZE,
+                                                    NULL, MB_SERIAL_TASK_PRIO,
+                                                    &xMbTaskHandle, MB_PORT_TASK_AFFINITY);
     if (xStatus != pdPASS) {
         vTaskDelete(xMbTaskHandle);
         // Force exit from function with failure
