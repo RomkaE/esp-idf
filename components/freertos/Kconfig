@@ -235,6 +235,10 @@ menu "FreeRTOS"
                     // place clean up code here
                 }
 
+    config FREERTOS_QUEUE_SETS
+        bool "Enable usage queue sets"
+        default n
+
 	config FREERTOS_USE_TIMERS
 		bool "Enable FreeRTOS software timers"
 		default y

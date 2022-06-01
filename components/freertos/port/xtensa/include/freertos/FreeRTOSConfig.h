@@ -327,7 +327,7 @@ extern void vPortCleanUpTCB ( void *pxTCB );
 
 #define INCLUDE_xTimerPendFunctionCall      0
 #define INCLUDE_eTaskGetState               1
-#define configUSE_QUEUE_SETS                0
+#define configUSE_QUEUE_SETS                CONFIG_FREERTOS_QUEUE_SETS
 
 #define configUSE_TICKLESS_IDLE             CONFIG_FREERTOS_USE_TICKLESS_IDLE
 #if configUSE_TICKLESS_IDLE
