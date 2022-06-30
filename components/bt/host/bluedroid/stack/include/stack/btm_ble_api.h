@@ -163,13 +163,13 @@ typedef UINT8   tBTM_BLE_SFP;
 
 /* default connection interval min */
 #ifndef BTM_BLE_CONN_INT_MIN_DEF
-#define BTM_BLE_CONN_INT_MIN_DEF     10      /* recommended min: 12.5 ms  = 10 * 1.25 */
+#define BTM_BLE_CONN_INT_MIN_DEF     16      /* recommended min: 12.5 ms  = 10 * 1.25 */
 #endif
 
 /* default connection interval max */
 #ifndef BTM_BLE_CONN_INT_MAX_DEF
 #if CONFIG_IDF_TARGET_ESP32
-#define BTM_BLE_CONN_INT_MAX_DEF     12      /* recommended max: 15 ms = 12 * 1.25 */
+#define BTM_BLE_CONN_INT_MAX_DEF     40      /* recommended max: 15 ms = 12 * 1.25 */
 #else
 #define BTM_BLE_CONN_INT_MAX_DEF     (((MAX_ACL_CONNECTIONS + 1) * 4) > 12 ? ((MAX_ACL_CONNECTIONS + 1) * 4) : 12)     /* recommended max:  BTM_BLE_CONN_INT_MAX_DEF * 1.25 ms*/
 #endif
@@ -182,7 +182,7 @@ typedef UINT8   tBTM_BLE_SFP;
 
 /* default supervision timeout */
 #ifndef BTM_BLE_CONN_TIMEOUT_DEF
-#define BTM_BLE_CONN_TIMEOUT_DEF    600
+#define BTM_BLE_CONN_TIMEOUT_DEF    400
 #endif
 
 /* minimum acceptable connection interval */
