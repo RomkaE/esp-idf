@@ -43,7 +43,7 @@
 #include "sys/queue.h"
 
 // Number of tags to be cached. Must be 2**n - 1, n >= 2.
-#define TAG_CACHE_SIZE 31
+#define TAG_CACHE_SIZE 4
 #define MAX_GENERATION ((1 << 29) - 1)
 
 typedef struct {
@@ -158,7 +158,8 @@ void esp_log_level_set(const char *tag, esp_log_level_t level)
 */
 static esp_log_level_t s_log_level_get_and_unlock(const char *tag)
 {
-    esp_log_level_t level_for_tag;
+    esp_log_level_t level_for_tag = ESP_LOG_VERBOSE;
+    /*
     // Look for the tag in cache first, then in the linked list of all tags
     if (!get_cached_log_level(tag, &level_for_tag)) {
         if (!get_uncached_log_level(tag, &level_for_tag)) {
@@ -169,6 +170,7 @@ static esp_log_level_t s_log_level_get_and_unlock(const char *tag)
         ++s_log_cache_misses;
 #endif
     }
+    */
     esp_log_impl_unlock();
 
     return level_for_tag;
