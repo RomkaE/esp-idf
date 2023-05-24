@@ -74,7 +74,14 @@ void esp_restart_noos(void)
     esp_cpu_intr_disable(0xFFFFFFFF);
 
     // Enable RTC watchdog for 1 second
-    wdt_hal_context_t rtc_wdt_ctx;
+    wdt_hal_context_t rtc_wdt_ctx = {.inst = WDT_RWDT, .rwdt_dev = &RTCCNTL};
+    if (wdt_hal_is_enabled(&rtc_wdt_ctx))
+    {
+      wdt_hal_write_protect_disable(&rtc_wdt_ctx);
+      wdt_hal_disable(&rtc_wdt_ctx);
+      wdt_hal_write_protect_enable(&rtc_wdt_ctx);
+    }
+
     wdt_hal_init(&rtc_wdt_ctx, WDT_RWDT, 0, false);
     uint32_t stage_timeout_ticks = (uint32_t)(1000ULL * rtc_clk_slow_freq_get_hz() / 1000ULL);
     wdt_hal_write_protect_disable(&rtc_wdt_ctx);
