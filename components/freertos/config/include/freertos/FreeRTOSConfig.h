@@ -104,7 +104,7 @@
 #define configUSE_MUTEXES                        1
 #define configUSE_RECURSIVE_MUTEXES              1
 #define configUSE_COUNTING_SEMAPHORES            1
-#define configUSE_QUEUE_SETS                     1
+#define configUSE_QUEUE_SETS                     0
 #define configQUEUE_REGISTRY_SIZE                CONFIG_FREERTOS_QUEUE_REGISTRY_SIZE
 #define configUSE_TASK_NOTIFICATIONS             1
 #define configTASK_NOTIFICATION_ARRAY_ENTRIES    CONFIG_FREERTOS_TASK_NOTIFICATION_ARRAY_ENTRIES
@@ -183,7 +183,7 @@
 
 /* ------------------- Software Timer ---------------------- */
 
-#define configUSE_TIMERS                          1
+#define configUSE_TIMERS                          CONFIG_FREERTOS_USE_TIMERS
 #define configTIMER_TASK_PRIORITY                 CONFIG_FREERTOS_TIMER_TASK_PRIORITY
 #define configTIMER_QUEUE_LENGTH                  CONFIG_FREERTOS_TIMER_QUEUE_LENGTH
 #define configTIMER_TASK_STACK_DEPTH              CONFIG_FREERTOS_TIMER_TASK_STACK_DEPTH
@@ -214,7 +214,7 @@
 #define INCLUDE_uxTaskGetStackHighWaterMark        1
 #define INCLUDE_eTaskGetState                      1
 #define INCLUDE_xTaskResumeFromISR                 1
-#define INCLUDE_xTimerPendFunctionCall             1
+#define INCLUDE_xTimerPendFunctionCall             0
 #define INCLUDE_xTaskGetSchedulerState             1
 #define INCLUDE_xTaskGetCurrentTaskHandle          1
 
