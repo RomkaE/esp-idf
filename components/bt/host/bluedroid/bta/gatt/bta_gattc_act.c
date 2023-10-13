@@ -131,7 +131,7 @@ static void bta_gattc_enable(tBTA_GATTC_CB *p_cb)
     if (p_cb->state == BTA_GATTC_STATE_DISABLED || p_cb->state == BTA_GATTC_STATE_DISABLING) {
         /* initialize control block */
         memset(&bta_gattc_cb, 0, sizeof(tBTA_GATTC_CB));
-        bta_gattc_cb.auto_disc = true;
+        bta_gattc_cb.auto_disc = false;
         p_cb->state = BTA_GATTC_STATE_ENABLED;
     } else {
         APPL_TRACE_DEBUG("GATTC is already enabled");
