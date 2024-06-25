@@ -186,6 +186,7 @@ typedef union {
      */
     struct gattc_reg_for_notify_evt_param {
         esp_gatt_status_t status;       /*!< Operation status */
+        esp_bd_addr_t remote_bda;       /*!< Remote bluetooth device address */
         uint16_t handle;                /*!< The characteristic or descriptor handle */
     } reg_for_notify;                   /*!< Gatt client callback param of ESP_GATTC_REG_FOR_NOTIFY_EVT */
 
