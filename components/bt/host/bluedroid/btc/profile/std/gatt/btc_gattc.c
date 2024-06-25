@@ -692,6 +692,7 @@ static void btc_gattc_reg_for_notify(btc_ble_gattc_args_t *arg)
 
     memset(&param, 0, sizeof(esp_ble_gattc_cb_param_t));
     param.reg_for_notify.status = status;
+    memcpy(param.reg_for_notify.remote_bda, arg->reg_for_notify.remote_bda, sizeof(esp_bd_addr_t));
     param.reg_for_notify.handle = arg->reg_for_notify.handle;
     btc_gattc_cb_to_app(ESP_GATTC_REG_FOR_NOTIFY_EVT, arg->reg_for_notify.gattc_if, &param);
 }
