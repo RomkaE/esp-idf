@@ -279,6 +279,11 @@ menu "FreeRTOS"
 
                 Note: The clock used for run time statistics can be configured in FREERTOS_RUN_TIME_STATS_CLK.
 
+        config FREERTOS_CLEAR_RUN_TIME_STATS
+            bool "configCLEAR_RUN_TIME_STATS"
+            default n
+            depends on FREERTOS_GENERATE_RUN_TIME_STATS && !FREERTOS_SMP
+
         choice FREERTOS_RUN_TIME_COUNTER_TYPE
             prompt "configRUN_TIME_COUNTER_TYPE"
             depends on FREERTOS_GENERATE_RUN_TIME_STATS && !FREERTOS_SMP
