@@ -236,7 +236,7 @@ menu "ESP32C3-Specific"
     config ESP32C3_LIGHTSLEEP_GPIO_RESET_WORKAROUND
         bool "light sleep GPIO reset workaround"
         default y
-        select PM_SLP_DISABLE_GPIO if FREERTOS_USE_TICKLESS_IDLE
+        select PM_SLP_DISABLE_GPIO if IDF_TARGET_ESP32C3 && FREERTOS_USE_TICKLESS_IDLE
         help
             ESP32C3 will reset at wake-up if GPIO is received a small electrostatic pulse during
             light sleep, with specific condition
