@@ -332,6 +332,10 @@ menu "FreeRTOS"
             display the run time of each task as a % of the total run time of all
             CPUs (task run time / no of CPUs) / (total run time / 100 )
 
+    config FREERTOS_GENERATE_REAL_TIME_STATS
+        bool "configGENERATE_REAL_TIME_STATS"
+        default n
+        depends on FREERTOS_GENERATE_RUN_TIME_STATS
 
     choice FREERTOS_RUN_TIME_STATS_CLK
         prompt "Choose the clock source for run time stats"

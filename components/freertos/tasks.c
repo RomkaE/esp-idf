@@ -4129,6 +4129,11 @@ static void prvCheckTasksWaitingTermination( void )
 		#if ( configGENERATE_RUN_TIME_STATS == 1 )
 		{
 			pxTaskStatus->ulRunTimeCounter = pxTCB->ulRunTimeCounter;
+			#if ( configGENERATE_REAL_TIME_STATS == 1 )
+			{
+				pxTCB->ulRunTimeCounter = 0;
+			}
+			#endif
 		}
 		#else
 		{

@@ -256,6 +256,10 @@ int xt_clock_freq(void) __attribute__((deprecated));
 #define configGENERATE_RUN_TIME_STATS   1       /* Used by vTaskGetRunTimeStats() */
 #endif
 
+#ifdef CONFIG_FREERTOS_GENERATE_REAL_TIME_STATS
+#define configGENERATE_REAL_TIME_STATS  1
+#endif
+
 #define configUSE_TRACE_FACILITY_2      0		/* Provided by Xtensa port patch */
 #define configBENCHMARK					0		/* Provided by Xtensa port patch */
 #define configUSE_16_BIT_TICKS			0
